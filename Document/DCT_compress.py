@@ -24,6 +24,26 @@ def dct_coeff():
 # In[2]:
 
 
+def quantization_level(n):
+    Q50 = np.zeros([8,8])
+
+    Q50 = np.array([[16, 11, 10, 16, 24, 40, 52, 61],
+               [12, 12, 14, 19, 26, 58, 60, 55],
+               [14, 13, 16, 24, 40, 57, 69, 56],
+               [14, 17, 22, 29, 51, 87, 80, 62],
+               [18, 22, 37, 56, 68, 109, 103, 77],
+               [24, 35, 55, 64, 81, 104, 113, 92],
+               [49, 64, 78, 87, 103, 121, 120, 101],
+               [72, 92, 95, 98, 112, 100, 103, 99]])
+
+    Q = np.zeros([8,8])
+    for i in range(8):
+        for j in range(8):
+            if n>50:
+                Q[i,j]= min(np.round((100-n)/50*Q50[i,j]),255)
+            else:
+                Q[i,j]= min(np.round(50/n *Q50[i,j]),255)
+    return Q
 
 
 # In[3]:
@@ -124,7 +144,7 @@ def Compress_img(file,level):
 
     tmp = cv2.merge((D_B, D_G, D_R))
 
-    cv2.imwrite('DCT.jpg',tmp)
+    cv2.imwrite('DCT_'+str(level)+'.jpg',tmp)
     
     C_R = quantiz(D_R,Q)
     C_R[C_R==0] = 0
@@ -135,7 +155,7 @@ def Compress_img(file,level):
     
     tmp = cv2.merge((C_B,C_G,C_R))
 
-    cv2.imwrite('After_Quantiz.jpg',tmp)
+    cv2.imwrite('After_Quantiz_'+str(level)+'.jpg',tmp)
     return C_B,C_G,C_R,Q,T,T_prime
     
 
@@ -143,23 +163,23 @@ def Compress_img(file,level):
 # In[9]:
 
 
-def Decompress_img(C_B,C_G,C_R,Q,T,T_prime):
+def Decompress_img(C_B,C_G,C_R,Q,T,T_prime,fileout):
     N_R = decompress(C_R,Q,T,T_prime)
     N_G = decompress(C_G,Q,T,T_prime)
     N_B = decompress(C_B,Q,T,T_prime)
 
     N_I = cv2.merge((N_B, N_G, N_R))
-    cv2.imwrite('Decompressed.jpg',N_I)
+    cv2.imwrite(fileout,N_I)
 
 
 # In[10]:
 
 
-def Evaluate(file):
+def Evaluate(file,fileout):
     
     I = cv2.imread(file)
     
-    I1 = cv2.imread("Decompressed.jpg")
+    I1 = cv2.imread(fileout)
     
     m,n,k = I1.shape
     
@@ -184,6 +204,7 @@ file = sys.argv[1]
 level = int(sys.argv[2])
 print("Filename: ",file)
 print("Level of compression: ",level)
+fileout = str("Decompress_" + str(level) + ".jpg")
 
 print("Compressing....")
 start = time.time()
@@ -192,13 +213,13 @@ time_comp = time.time()
 print("Compression Time: ",np.round(time_comp - start,1)," sec")
 
 print("Decompressing...")
-Decompress_img(C_B,C_G,C_R,Q,T,T_prime)
+Decompress_img(C_B,C_G,C_R,Q,T,T_prime,fileout)
 time_decomp = time.time()
 
 print("Decompression Time: ",np.round(time_decomp - time_comp,1)," sec")
 
 end = time.time()
 print("Total: ",np.round(end - start,1)," sec")
-rms, snr = Evaluate(file)
+rms, snr = Evaluate(file,fileout)
 print("RMS: ",np.round(rms,4))
 print("SNR: ",np.round(snr,4))
