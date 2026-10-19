@@ -138,22 +138,23 @@ def Decompress_img(C_B, C_G, C_R, Q, T, T_prime):
     N_B = decompress(C_B, Q, T, T_prime)
 
     N_I = cv2.merge((N_B, N_G, N_R))
-    cv2.imwrite('Decompressed.jpg', N_I)
+    stored = np.clip(np.round(N_I), 0, 255).astype(np.uint8)
+    cv2.imwrite('Decompressed.jpg', stored)
+    return stored
 
 
-def Evaluate(file):
+def Evaluate(original, reconstructed):
+    """Fidelity of a reconstruction against the original image.
 
-    I = cv2.imread(file)
-
-    I1 = cv2.imread("Decompressed.jpg")
-
-    m, n, k = I1.shape
-
-    rms = np.sqrt(np.sum(np.square(I1-I)))/(m*n)
-
-    snr = np.sum(np.square(I1))/np.sum(np.square(I1-I))
-
-    return rms, snr
+    Returns RMSE in grey levels and PSNR in dB, both computed against the original.
+    The comparison is made in memory: writing the reconstruction to a JPEG and reading it
+    back would fold the encoder's own loss into the codec's error figure.
+    """
+    diff = reconstructed.astype(np.float64) - original.astype(np.float64)
+    mse = float(np.mean(np.square(diff)))
+    rmse = float(np.sqrt(mse))
+    psnr = float('inf') if mse == 0 else float(10 * np.log10(255.0 ** 2 / mse))
+    return rmse, psnr
 
 def dct(M,T,T_prime):
     dct_res = np.zeros(M.shape)
@@ -172,6 +173,8 @@ if __name__ == "__main__":
     print("Filename: ", file)
     print("Level of compression: ", level)
 
+    original = cv2.imread(file)
+
     print("Compressing....")
     start = time.time()
     C_B, C_G, C_R, Q, T, T_prime = Compress_img(file, level)
@@ -179,13 +182,13 @@ if __name__ == "__main__":
     print("Compression Time: ", np.round(time_comp - start, 1), " sec")
 
     print("Decompressing...")
-    Decompress_img(C_B, C_G, C_R, Q, T, T_prime)
+    reconstructed = Decompress_img(C_B, C_G, C_R, Q, T, T_prime)
     time_decomp = time.time()
 
     print("Decompression Time: ", np.round(time_decomp - time_comp, 1), " sec")
 
     end = time.time()
     print("Total: ", np.round(end - start, 1), " sec")
-    rms, snr = Evaluate(file)
-    print("RMS: ", np.round(rms, 4))
-    print("SNR: ", np.round(snr, 4))
+    rmse, psnr = Evaluate(original, reconstructed)
+    print("RMSE (grey levels): ", np.round(rmse, 4))
+    print("PSNR (dB): ", np.round(psnr, 2))

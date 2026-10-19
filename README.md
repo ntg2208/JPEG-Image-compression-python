@@ -117,8 +117,14 @@ The script generates three output files in the current directory:
 
 The script outputs:
 - **Compression/Decompression Time** - Processing time for each operation
-- **RMS Error** - Root Mean Square error between original and decompressed image
-- **SNR** - Signal-to-Noise Ratio (higher is better)
+- **RMSE (grey levels)** - Root mean square error of the reconstruction against the original image
+- **PSNR (dB)** - Peak signal-to-noise ratio of the reconstruction against the original image, with the
+  peak fixed at 255 (higher is better)
+
+Both figures are computed in memory, in `Evaluate(original, reconstructed)`. The comparison is
+deliberately not made by re-reading `Decompressed.jpg`: that would fold the JPEG encoder's own loss into
+the codec's error figure, overstating the error most at high quality settings, where the quantisation
+loss is small.
 
 ## Code Review Notes
 
