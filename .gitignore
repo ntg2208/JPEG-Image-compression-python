@@ -1,3 +1,5 @@
 __pycache__/
 .DS_Store
 *.pyc
+jpeg_quality_study.ipynb
+jpeg_quality_study_filled.ipynb
