@@ -58,14 +58,14 @@ python DCT.py <input_file> <compression_level>
 ### Examples
 
 ```bash
-# Medium compression (quality 50)
-python DCT.py Image/car1.jpg 50
+# Medium compression (quality 50) on the natural test scene
+python DCT.py Image/scene_a.jpg 50
 
-# High quality (low compression)
-python DCT.py Image/car2.jpg 90
+# High quality (low compression) on the smooth synthetic scene
+python DCT.py Image/scene_b.jpg 90
 
-# Low quality (high compression)
-python DCT.py Image/cameraman.tif 10
+# Low quality (high compression) on the greyscale resolution chart
+python DCT.py Image/test_pattern.png 10
 ```
 
 **Compression Level Guide:**
@@ -74,6 +74,25 @@ python DCT.py Image/cameraman.tif 10
 - `70-100`: Low compression, high quality (closer to original)
 
 **Important:** The input image dimensions should be divisible by 8 for proper block processing. The script does not currently handle padding for non-conforming dimensions.
+
+## Test Images and Provenance
+
+All three bundled images are used as codec input only. None of them is a downloaded photograph.
+
+| File | Size | What it is | How it was made |
+|---|---|---|---|
+| `Image/scene_a.jpg` | 1408x768 | Natural scene: a car on a coastal road at sunset. The harder case. | AI-generated before publication |
+| `Image/scene_b.jpg` | 1408x768 | Smooth scene: gradient sky, cosine hills, one hard-edged structure, text label. The easy case. | Generated in code by `tools/make_test_images.py` |
+| `Image/test_pattern.png` | 512x512 | Greyscale resolution chart: zone plate, frequency wedges, grey staircase. | Generated in code by `tools/make_test_images.py` |
+
+Regenerate the two code-generated images with:
+
+```bash
+python tools/make_test_images.py
+```
+
+Only `scene_a.jpg` cannot be regenerated from code, because it is a generative-model output. It carries no
+third-party rights and no embedded metadata beyond the encoder's own.
 
 ## How It Works
 
